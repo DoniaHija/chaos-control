@@ -92,14 +92,31 @@
     body.dark .pin-btn{background:#3d321f;color:#ffe2a0;border-color:#5b4927}
     body.dark .pin-btn.pinned{background:#ffcf67;color:#4a2d00}
     body.dark .progress-details span{background:#2b2d4a;color:#f7f7ff}
+
+    .auth-screen{min-height:100vh;display:grid;place-items:center;padding:22px;background:linear-gradient(135deg,#f6f7fb,#fdf3ff)}
+    body.dark .auth-screen{background:linear-gradient(135deg,#121225,#261b35)}
+    .auth-card{width:min(460px,100%);background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.8);border-radius:30px;padding:24px;box-shadow:var(--shadow)}
+    body.dark .auth-card{background:rgba(31,32,56,.94);border-color:var(--border);color:#f7f7ff}
+    .auth-card h1{font-size:34px;margin:8px 0 6px}.auth-card p{color:var(--muted);margin:0 0 18px}.auth-actions{display:flex;gap:10px;margin-top:14px}.auth-actions button{flex:1}.auth-message{margin-top:12px;font-weight:800;color:#a30027}.user-pill{font-weight:850;background:#f1f1fb;color:#343451;border-radius:999px;padding:9px 12px}body.dark .user-pill{background:#2b2d4a;color:#f7f7ff}
     @media(max-width:820px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.form-grid,.filters{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.task{grid-template-columns:auto 1fr}.task .row{grid-column:2}.circle{width:56px;height:56px}.circle:after{width:42px;height:42px}}
   </style>
 </head>
 <body>
-<div class="app">
+<div id="authView" class="auth-screen">
+  <div class="auth-card">
+    <div class="logo">⚡</div>
+    <h1>Chaos Control</h1>
+    <p>Sign in to sync your courses, tasks, notes, and progress across devices.</p>
+    <div class="field"><label>Username</label><input id="authUsername" placeholder="donia"></div>
+    <div class="field"><label>Password</label><input id="authPassword" type="password" placeholder="At least 6 characters"></div>
+    <div class="auth-actions"><button class="primary" onclick="loginUser()">Log in</button><button class="pink" onclick="signupUser()">Create account</button></div>
+    <div id="authMessage" class="auth-message"></div>
+  </div>
+</div>
+<div id="appRoot" class="app hidden">
   <header>
     <div class="brand"><div class="logo">⚡</div><div><h1>Chaos Control</h1><p class="subtitle">Arrange the chaos. Do the next thing.</p></div></div>
-    <div class="top-tabs"><button class="primary" onclick="openCourseModal()">+ Course</button><div class="theme-toggle"><span>☀️</span><label class="switch"><input id="themeSwitch" type="checkbox" onchange="toggleTheme(this.checked)"><span class="slider"></span></label><span>🌙</span></div></div>
+    <div class="top-tabs"><span id="userPill" class="user-pill"></span><button class="ghost" onclick="logoutUser()">Logout</button><button class="primary" onclick="openCourseModal()">+ Course</button><div class="theme-toggle"><span>☀️</span><label class="switch"><input id="themeSwitch" type="checkbox" onchange="toggleTheme(this.checked)"><span class="slider"></span></label><span>🌙</span></div></div>
   </header>
 
   <main id="homeView" class="view active">
@@ -144,13 +161,40 @@
 <div id="thoughtModal" class="modal"><div class="modal-card"><h2>Add Quick Thought</h2><div class="field"><label>Course</label><select id="thoughtCourse"></select></div><div class="field"><label>Thought</label><textarea id="quickThought" placeholder="Need to ask lecturer..."></textarea></div><div class="actions"><button class="ghost" onclick="closeModals()">Cancel</button><button class="primary" onclick="saveQuickThought()">Save</button></div></div></div>
 
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDezSGoXZJCFf58eBb0jHcF4JPJ3AABOWI",
+  authDomain: "chaos-control-eb9c9.firebaseapp.com",
+  projectId: "chaos-control-eb9c9",
+  storageBucket: "chaos-control-eb9c9.firebasestorage.app",
+  messagingSenderId: "119566187208",
+  appId: "1:119566187208:web:21b1ef618a1f0cb04303fd",
+  measurementId: "G-K7G9CY3JBT"
+};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
 const STORAGE_KEY='chaosControlFixedV1';
-let state={courses:[],tasks:[],progressHistory:{}};let currentCourseId=null;let editingFiles=[];
+let state={courses:[],tasks:[],progressHistory:{}};let currentCourseId=null;let editingFiles=[];let currentUser=null;let currentUsername='';let cloudReady=false;let saveTimer=null;
 const affirmations=["You don’t need to finish everything today. You just need to make the next smart move.","Panic is not a project manager. You are.","Small progress still counts. Especially on messy days.","You are not behind forever. You are just looking at the dashboard now.","One checked box is still a win. Corporate-approved emotional ROI.","You can be overwhelmed and still move forward."];
+function cleanUsername(name){return String(name||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'')}
+function usernameEmail(name){return cleanUsername(name)+'@chaoscontrol.local'}
+function authMessage(msg){document.getElementById('authMessage').textContent=msg||''}
+async function signupUser(){const username=cleanUsername(document.getElementById('authUsername').value);const password=document.getElementById('authPassword').value;if(!username)return authMessage('Choose a username first.');if(password.length<6)return authMessage('Password must be at least 6 characters.');try{authMessage('Creating account...');let initialState={courses:[],tasks:[],progressHistory:{}};const oldLocal=localStorage.getItem(STORAGE_KEY);if(oldLocal){try{initialState=JSON.parse(oldLocal)}catch(e){initialState={courses:[],tasks:[],progressHistory:{}}}}state=initialState;normalizeState();const cred=await auth.createUserWithEmailAndPassword(usernameEmail(username),password);currentUsername=username;await db.collection('users').doc(cred.user.uid).set({username,state,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});authMessage('');}catch(e){authMessage(friendlyAuthError(e));}}
+async function loginUser(){const username=cleanUsername(document.getElementById('authUsername').value);const password=document.getElementById('authPassword').value;if(!username)return authMessage('Enter your username.');if(!password)return authMessage('Enter your password.');try{authMessage('Logging in...');currentUsername=username;await auth.signInWithEmailAndPassword(usernameEmail(username),password);authMessage('');}catch(e){authMessage(friendlyAuthError(e));}}
+function logoutUser(){save();auth.signOut()}
+function friendlyAuthError(e){const code=e&&e.code?e.code:'';if(code.includes('email-already-in-use'))return 'This username already exists. Try logging in.';if(code.includes('invalid-login-credentials')||code.includes('wrong-password')||code.includes('user-not-found'))return 'Username or password is incorrect.';if(code.includes('weak-password'))return 'Password must be at least 6 characters.';return 'Something went wrong. Try again.'}
+function showApp(){document.getElementById('authView').classList.add('hidden');document.getElementById('appRoot').classList.remove('hidden');document.getElementById('userPill').textContent='@'+(currentUsername||currentUser.email.split('@')[0]);}
+function showAuth(){document.getElementById('appRoot').classList.add('hidden');document.getElementById('authView').classList.remove('hidden');}
+function initAuth(){auth.onAuthStateChanged(async user=>{if(user){currentUser=user;currentUsername=(user.email||'').split('@')[0];await loadCloud();showApp();render();}else{currentUser=null;currentUsername='';cloudReady=false;state={courses:[],tasks:[],progressHistory:{}};showAuth();}})}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
-function load(){try{const saved=localStorage.getItem(STORAGE_KEY); if(saved) state=JSON.parse(saved); if(!state.courses)state.courses=[]; if(!state.tasks)state.tasks=[]; if(!state.progressHistory)state.progressHistory={}; state.courses.forEach(c=>{if(c.pinned===undefined)c.pinned=false; if(c.randomThoughts===undefined)c.randomThoughts='';});}catch(e){console.error(e)}}
-function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function normalizeState(){if(!state||typeof state!=='object')state={courses:[],tasks:[],progressHistory:{}};if(!state.courses)state.courses=[];if(!state.tasks)state.tasks=[];if(!state.progressHistory)state.progressHistory={};state.courses.forEach(c=>{if(c.pinned===undefined)c.pinned=false;if(c.randomThoughts===undefined)c.randomThoughts='';});}
+function localKey(){return currentUser?`${STORAGE_KEY}_${currentUser.uid}`:STORAGE_KEY}
+async function loadCloud(){cloudReady=false;state={courses:[],tasks:[],progressHistory:{}};if(!currentUser)return;try{const ref=db.collection('users').doc(currentUser.uid);const snap=await ref.get();if(snap.exists&&snap.data().state){state=snap.data().state;}else{const oldLocal=localStorage.getItem(STORAGE_KEY);if(oldLocal){try{state=JSON.parse(oldLocal)}catch(e){state={courses:[],tasks:[],progressHistory:{}}}}normalizeState();await ref.set({username:currentUsername||currentUser.email.split('@')[0],state,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}normalizeState();localStorage.setItem(localKey(),JSON.stringify(state));cloudReady=true;}catch(e){console.error(e);const backup=localStorage.getItem(localKey());if(backup){state=JSON.parse(backup);normalizeState();}cloudReady=true;alert('Cloud sync had a problem, but the app opened from this device backup. Try refreshing if syncing looks wrong.');}}
+function save(){normalizeState();if(currentUser)localStorage.setItem(localKey(),JSON.stringify(state));if(!cloudReady||!currentUser)return;clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await db.collection('users').doc(currentUser.uid).set({username:currentUsername||currentUser.email.split('@')[0],state,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(e){console.error('Cloud save failed',e);}},350)}
 function daysLeft(date){if(!date)return null;const today=new Date();today.setHours(0,0,0,0);const d=new Date(date+'T00:00:00');return Math.ceil((d-today)/(1000*60*60*24))}
 function statusText(s){return {'not-started':'Not started','in-progress':'In progress','done':'Done'}[s]||s}
 function courseById(id){return state.courses.find(c=>c.id===id)}
@@ -194,7 +238,7 @@ function escapeHtml(str=''){return String(str).replace(/[&<>'"]/g,m=>({'&':'&amp
 function applyTheme(){const theme=localStorage.getItem('chaos-control-theme')||'light';document.body.classList.toggle('dark',theme==='dark');const sw=document.getElementById('themeSwitch');if(sw)sw.checked=theme==='dark'}
 function toggleTheme(isDark){localStorage.setItem('chaos-control-theme',isDark?'dark':'light');applyTheme()}
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModals()}));
-applyTheme();load();render();
+applyTheme();initAuth();
 </script>
 </body>
 </html>
