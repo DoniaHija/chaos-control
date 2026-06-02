@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chaos Control</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;--card:#ffffff;--text:#1d1d2f;--muted:#68687a;--primary:#6c63ff;--primary2:#ff7ac8;--accent:#00c2a8;--danger:#ff4d6d;--warning:#ffb703;--border:#e7e7f2;--shadow:0 18px 40px rgba(31,31,55,.10);
+    }
+    body.dark{--bg:#121225;--card:#1f2038;--text:#f7f7ff;--muted:#b7b7cc;--border:#343651;--shadow:0 18px 40px rgba(0,0,0,.28)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#f6f7fb,#fdf3ff);color:var(--text);min-height:100vh}
+    body.dark{background:linear-gradient(135deg,#121225,#261b35)}
+    body.dark .card,body.dark .modal-card,body.dark .course-card,body.dark .task{background:rgba(31,32,56,.94);border-color:var(--border)}
+    body.dark input,body.dark select,body.dark textarea{background:#17182b;color:var(--text);border-color:var(--border)}
+    body.dark .circle:after{background:#1f2038}
+    body.dark .stat{background:linear-gradient(135deg,#20213a,#17182b)}
+    button,input,select,textarea{font:inherit;color:var(--text)}
+    button{border:0;border-radius:14px;padding:11px 14px;cursor:pointer;font-weight:750;background:#ececff;color:#302f67;transition:.15s;min-height:42px}
+    button:hover{transform:translateY(-1px)}
+    button.primary{background:linear-gradient(135deg,var(--primary),#8c5bff);color:white}
+    button.pink{background:linear-gradient(135deg,var(--primary2),#ff9ac7);color:white}
+    button.green{background:linear-gradient(135deg,#00c2a8,#63e6be);color:#053b34}
+    button.danger{background:#ffe8ee;color:#a30027}
+    button.ghost{background:#f3f3fa;color:#353552}
+    button.small{padding:7px 10px;min-height:34px;border-radius:11px;font-size:13px}
+    .app{max-width:1120px;margin:0 auto;padding:22px 16px 60px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+    .brand{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border-radius:18px;background:linear-gradient(135deg,#6c63ff,#ff7ac8,#00c2a8);display:grid;place-items:center;color:white;font-size:26px;box-shadow:var(--shadow)}
+    h1{margin:0;font-size:32px;line-height:1}.subtitle{margin:6px 0 0;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}.full{grid-column:1/-1}
+    .card{background:rgba(255,255,255,.88);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);border-radius:26px;padding:20px;box-shadow:var(--shadow)}
+    .card h2{margin:0 0 12px;font-size:21px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.between{display:flex;align-items:center;justify-content:space-between;gap:12px}.muted{color:var(--muted)}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{border-radius:22px;padding:16px;background:linear-gradient(135deg,#fff,#f2f4ff);border:1px solid var(--border)}.stat strong{font-size:30px;display:block}.stat span{color:var(--muted)}
+    .course-list,.task-list{display:flex;flex-direction:column;gap:12px}.course-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px;border-radius:22px;background:white;border:1px solid var(--border);box-shadow:0 10px 25px rgba(31,31,55,.06);cursor:pointer}
+    .course-left{display:flex;align-items:center;gap:12px}.dot{width:15px;height:48px;border-radius:20px}.course-title{font-weight:850;font-size:18px}.course-meta{font-size:13px;color:var(--muted);margin-top:3px}
+    .circle{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;font-weight:900;background:conic-gradient(var(--c,#6c63ff) calc(var(--p,0)*1%), #ececf6 0);position:relative;flex-shrink:0}.circle:after{content:"";position:absolute;width:47px;height:47px;background:white;border-radius:50%}.circle span{position:relative;z-index:1;font-size:14px}
+    .task{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:14px;border:1px solid var(--border);background:white;border-radius:20px}.task.done{opacity:.72}.task.done .task-title{text-decoration:line-through}.check{width:23px;height:23px;accent-color:var(--primary);margin-top:2px}.task-title{font-weight:850}.badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.badge{border-radius:999px;padding:5px 9px;font-size:12px;font-weight:750;background:#f1f1fb;color:#343451}.badge.type{background:#e8fff9;color:#006c5d}.badge.due{background:#fff4dc;color:#8a5700}.badge.status{background:#eef0ff;color:#39327d}.badge.overdue{background:#ffe8ee;color:#a30027}
+    .next-box{border-radius:22px;padding:16px;background:linear-gradient(135deg,#fff3f9,#eef0ff);border:1px solid #f0d6ff}.next-title{font-size:18px;font-weight:900}.empty{padding:18px;border:1px dashed #c9c9df;border-radius:18px;color:var(--muted);text-align:center;background:#fafaff}
+    input,select,textarea{width:100%;border:1px solid var(--border);background:white;border-radius:15px;padding:12px;outline:none}textarea{min-height:110px;resize:vertical}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field label{display:block;font-size:13px;font-weight:800;margin:4px 0 6px;color:#45455f}.modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(24,24,43,.45);z-index:20;padding:16px}.modal.show{display:grid}.modal-card{background:white;border-radius:28px;padding:20px;max-width:620px;width:100%;box-shadow:0 35px 80px rgba(0,0,0,.22);max-height:90vh;overflow:auto}.modal-card h2{margin-top:0}.hidden{display:none!important}
+    .top-tabs{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.view{display:none}.view.active{display:block}.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}.affirmation{font-size:18px;font-weight:850;line-height:1.45;background:linear-gradient(135deg,#ffeefa,#efffff);border:1px solid #f0d6ff;border-radius:22px;padding:18px}.file-list{margin-top:8px;font-size:13px;color:var(--muted)}
+    .theme-toggle{display:flex;align-items:center;gap:7px;background:#f3f3fa;color:#353552;border-radius:999px;padding:7px 10px;font-weight:850}.switch{position:relative;width:48px;height:26px}.switch input{display:none}.slider{position:absolute;cursor:pointer;inset:0;background:#dadaea;border-radius:999px;transition:.2s}.slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.2)}.switch input:checked+.slider{background:#6c63ff}.switch input:checked+.slider:before{transform:translateX(22px)}body.dark .theme-toggle{background:#262845;color:#f7f7ff}
+    .filters{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}.status-select{background:white!important;color:#1d1d2f!important;border:1px solid var(--border)!important}.course-page-head{margin-bottom:16px}.back{margin-bottom:14px}
+
+    /* Readability/contrast safety pass: text stays readable in every box, button, badge, form, and theme. */
+    body:not(.dark) .card,
+    body:not(.dark) .modal-card,
+    body:not(.dark) .task,
+    body:not(.dark) .course-card,
+    body:not(.dark) .empty{color:#1d1d2f}
+    body.dark .card,
+    body.dark .modal-card,
+    body.dark .task,
+    body.dark .course-card,
+    body.dark .empty,
+    body.dark .next-box,
+    body.dark .affirmation{color:#f7f7ff}
+    body.dark .next-box{background:linear-gradient(135deg,#272944,#221b35);border-color:#3b3d5e}
+    body.dark .affirmation{background:linear-gradient(135deg,#2a223d,#18343a);border-color:#3b3d5e}
+    body.dark .empty{background:#17182b;border-color:#4a4c69;color:#d8d8ea}
+    body.dark .course-meta,
+    body.dark .muted,
+    body.dark .stat span,
+    body.dark .file-list{color:#c7c7dc}
+    body.dark .field label{color:#eeeefd}
+    body.dark button.ghost{background:#2b2d4a;color:#f7f7ff}
+    body.dark button.danger{background:#4b1f2d;color:#ffd8e2}
+    body.dark button.green{color:#053b34}
+    body.dark .badge{background:#2b2d4a;color:#f7f7ff}
+    body.dark .badge.type{background:#123f39;color:#b9fff0}
+    body.dark .badge.due{background:#49381a;color:#ffe3a5}
+    body.dark .badge.status{background:#30315c;color:#f0f1ff}
+    body.dark .badge.overdue{background:#4b1f2d;color:#ffd8e2}
+    body.dark .status-select,
+    body.dark select.status-select{background:#17182b!important;color:#f7f7ff!important;border-color:#4a4c69!important}
+    body.dark input::placeholder,
+    body.dark textarea::placeholder{color:#aaaac1}
+    select, option{color:#1d1d2f;background:#ffffff}
+    body.dark select, body.dark option{color:#f7f7ff;background:#17182b}
+    input[type="date"]{color-scheme:light}
+    body.dark input[type="date"]{color-scheme:dark}
+    .course-card .badge[style]{font-weight:850}
+    .pin-btn{background:#fff7df;color:#8a5700;border:1px solid #ffe0a3;min-width:42px;font-size:16px}
+    .pin-btn.pinned{background:#ffcf67;color:#4a2d00}
+    .progress-details{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+    .progress-details span{font-size:12px;font-weight:800;padding:4px 8px;border-radius:999px;background:#f1f1fb;color:#343451}
+    .course-search{margin-bottom:12px}
+    .random-box textarea{min-height:86px}
+    .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(18px);opacity:0;pointer-events:none;z-index:40;background:#1d1d2f;color:white;border-radius:999px;padding:12px 16px;font-weight:850;box-shadow:0 15px 40px rgba(0,0,0,.24);transition:.22s}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    body.dark .pin-btn{background:#3d321f;color:#ffe2a0;border-color:#5b4927}
+    body.dark .pin-btn.pinned{background:#ffcf67;color:#4a2d00}
+    body.dark .progress-details span{background:#2b2d4a;color:#f7f7ff}
+    @media(max-width:820px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.form-grid,.filters{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.task{grid-template-columns:auto 1fr}.task .row{grid-column:2}.circle{width:56px;height:56px}.circle:after{width:42px;height:42px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><div class="logo">⚡</div><div><h1>Chaos Control</h1><p class="subtitle">Arrange the chaos. Do the next thing.</p></div></div>
+    <div class="top-tabs"><button class="primary" onclick="openCourseModal()">+ Course</button><div class="theme-toggle"><span>☀️</span><label class="switch"><input id="themeSwitch" type="checkbox" onchange="toggleTheme(this.checked)"><span class="slider"></span></label><span>🌙</span></div></div>
+  </header>
+
+  <main id="homeView" class="view active">
+    <section class="grid">
+      <div class="card">
+        <div class="between"><h2>Courses</h2><span class="muted" id="courseCount"></span></div>
+        <div id="coursesList" class="course-list"></div>
+      </div>
+      <div class="card">
+        <h2>What should you do next?</h2>
+        <div id="nextTask" class="next-box"></div>
+      </div>
+      <div class="card full">
+        <h2>Tasks</h2>
+        <div class="filters">
+          <select id="filterCourse" onchange="render()"><option value="all">All courses</option></select>
+          <select id="filterType" onchange="render()"><option value="all">All types</option><option>Lecture</option><option>Tirgul</option><option>Homework</option><option>Reading</option><option>Practice Exam</option><option>Exam</option><option>Note</option><option>Other</option></select>
+          <select id="filterStatus" onchange="render()"><option value="all">All statuses</option><option value="not-started">Not started</option><option value="in-progress">In progress</option><option value="done">Done</option></select>
+          <select id="sortBy" onchange="render()"><option value="due">Sort by due date</option><option value="course">Sort by course</option><option value="status">Sort by status</option></select>
+        </div>
+        <div id="homeTasks" class="task-list"></div>
+      </div>
+      <div class="card full"><h2>Gentle Reminder</h2><div id="affirmation" class="affirmation"></div></div>
+    </section>
+  </main>
+
+  <main id="courseView" class="view">
+    <button class="back ghost" onclick="showHome()">← Back home</button>
+    <section class="card course-page-head">
+      <div class="between"><div><h2 id="coursePageTitle"></h2><p class="muted" id="coursePageMeta"></p><div id="coursePageProgressDetails" class="progress-details"></div></div><div class="circle" id="coursePageCircle"><span>0%</span></div></div>
+      <div class="row"><button class="pink" onclick="openTaskModal(currentCourseId)">+ Add item to this course</button><button class="ghost" onclick="openCourseModal(currentCourseId)">Edit course</button><button class="danger" onclick="deleteCourse(currentCourseId)">Delete course</button></div>
+    </section>
+    <section class="card random-box"><h2>Random Thoughts</h2><textarea id="courseThoughts" placeholder="Need to ask lecturer..." oninput="saveRandomThoughts()"></textarea></section>
+    <section class="card"><h2>Course items</h2><input id="courseSearch" class="course-search" placeholder="🔍 Search course items..." oninput="renderCoursePage(currentCourseId)"><div id="courseTasks" class="task-list"></div></section>
+  </main>
+</div>
+<div id="toast" class="toast"></div>
+
+<div id="courseModal" class="modal"><div class="modal-card"><h2 id="courseModalTitle">Add course</h2><input type="hidden" id="courseId"><div class="form-grid"><div class="field"><label>Course name</label><input id="courseName" placeholder="Statistics"></div><div class="field"><label>Final / exam date</label><input id="courseExamDate" type="date"></div><div class="field"><label>Course color</label><input id="courseColor" type="color" value="#6c63ff"></div><div class="field"><label>Number of Lectures</label><input id="courseLectureCount" type="number" min="0" placeholder="7"></div><div class="field"><label>Number of Tirgulim</label><input id="courseTirgulCount" type="number" min="0" placeholder="7"></div><div class="field"><label>Notes</label><textarea id="courseNotes" placeholder="Anything important about this course..."></textarea></div></div><div class="actions"><button class="ghost" onclick="closeModals()">Cancel</button><button class="primary" onclick="saveCourse()">Save</button></div></div></div>
+
+<div id="taskModal" class="modal"><div class="modal-card"><h2 id="taskModalTitle">Add item</h2><input type="hidden" id="taskId"><div class="form-grid"><div class="field"><label>Title</label><input id="taskTitle" placeholder="Lecture 1 / HW 2 / Practice exam"></div><div class="field"><label>Course</label><select id="taskCourse"></select></div><div class="field"><label>Type</label><select id="taskType"><option>Lecture</option><option>Tirgul</option><option>Homework</option><option>Reading</option><option>Practice Exam</option><option>Exam</option><option>Note</option><option>Other</option></select></div><div class="field"><label>Status</label><select id="taskStatus" class="status-select"><option value="not-started">Not started</option><option value="in-progress">In progress</option><option value="done">Done</option></select></div><div class="field"><label>Due date</label><input id="taskDue" type="date"></div><div class="field"><label style="visibility:hidden">none</label><button class="ghost" onclick="setNoDueDate()">No due date</button></div></div><div class="field"><label>Notes</label><textarea id="taskNotes" placeholder="Write lecture/tirgul notes here..."></textarea></div><div class="field"><label>Import</label><input id="taskFiles" type="file" multiple><div id="existingFiles" class="file-list"></div></div><div class="actions"><button class="ghost" onclick="closeModals()">Cancel</button><button class="primary" onclick="saveTask()">Save</button></div></div></div>
+<div id="thoughtModal" class="modal"><div class="modal-card"><h2>Add Quick Thought</h2><div class="field"><label>Course</label><select id="thoughtCourse"></select></div><div class="field"><label>Thought</label><textarea id="quickThought" placeholder="Need to ask lecturer..."></textarea></div><div class="actions"><button class="ghost" onclick="closeModals()">Cancel</button><button class="primary" onclick="saveQuickThought()">Save</button></div></div></div>
+
+
+<script>
+const STORAGE_KEY='chaosControlFixedV1';
+let state={courses:[],tasks:[],progressHistory:{}};let currentCourseId=null;let editingFiles=[];
+const affirmations=["You don’t need to finish everything today. You just need to make the next smart move.","Panic is not a project manager. You are.","Small progress still counts. Especially on messy days.","You are not behind forever. You are just looking at the dashboard now.","One checked box is still a win. Corporate-approved emotional ROI.","You can be overwhelmed and still move forward."];
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function load(){try{const saved=localStorage.getItem(STORAGE_KEY); if(saved) state=JSON.parse(saved); if(!state.courses)state.courses=[]; if(!state.tasks)state.tasks=[]; if(!state.progressHistory)state.progressHistory={}; state.courses.forEach(c=>{if(c.pinned===undefined)c.pinned=false; if(c.randomThoughts===undefined)c.randomThoughts='';});}catch(e){console.error(e)}}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function daysLeft(date){if(!date)return null;const today=new Date();today.setHours(0,0,0,0);const d=new Date(date+'T00:00:00');return Math.ceil((d-today)/(1000*60*60*24))}
+function statusText(s){return {'not-started':'Not started','in-progress':'In progress','done':'Done'}[s]||s}
+function courseById(id){return state.courses.find(c=>c.id===id)}
+function tasksForCourse(id){return state.tasks.filter(t=>t.courseId===id)}
+function progressForCourse(id){const ts=tasksForCourse(id); if(!ts.length)return 0; return Math.round(ts.filter(t=>t.status==='done').length/ts.length*100)}
+function dueLabel(date){if(!date)return 'No due date';const d=daysLeft(date); if(d<0)return Math.abs(d)+' days overdue'; if(d===0)return 'Due today'; if(d===1)return 'Due tomorrow'; return d+' days left'}
+function render(){updateProgressSnapshots();save();renderCourseOptions();renderHome();if(currentCourseId)renderCoursePage(currentCourseId)}
+function renderCourseOptions(){const filter=document.getElementById('filterCourse');const taskCourse=document.getElementById('taskCourse');const currentFilter=filter.value;filter.innerHTML='<option value="all">All courses</option>';taskCourse.innerHTML='';state.courses.forEach(c=>{filter.innerHTML+=`<option value="${c.id}">${escapeHtml(c.name)}</option>`;taskCourse.innerHTML+=`<option value="${c.id}">${escapeHtml(c.name)}</option>`});filter.value=state.courses.some(c=>c.id===currentFilter)?currentFilter:'all'}
+function renderHome(){document.getElementById('courseCount').textContent=state.courses.length+' courses';const cl=document.getElementById('coursesList');cl.innerHTML='';if(!state.courses.length){cl.innerHTML='<div class="empty">No courses yet. Add your first course.</div>'}sortCourses(state.courses).forEach(c=>{const p=progressForCourse(c.id);const d=daysLeft(c.examDate);let meta=c.notes?escapeHtml(c.notes).slice(0,70):'No course notes'; if(c.examDate)meta+=` • ${d<0?'Final passed':d+' days left'}`;const details=progressDetailsHtml(c.id);const weekly=weeklyProgressText(c.id);cl.innerHTML+=`<div class="course-card" onclick="openCoursePage('${c.id}')"><div class="course-left"><button class="small pin-btn ${c.pinned?'pinned':''}" onclick="togglePin(event,'${c.id}')" title="Pin course">📌</button><div class="dot" style="background:${c.color}"></div><div><div class="course-title">${escapeHtml(c.name)}</div><div class="course-meta">${meta}</div>${details}<div class="course-meta">${weekly}</div></div></div><div class="circle" style="--p:${p};--c:${c.color}"><span>${p}%</span></div></div>`});
+ const nt=nearestTask();document.getElementById('nextTask').innerHTML=nt?`<div class="next-title">${escapeHtml(nt.title)}</div><p class="muted">${escapeHtml(courseById(nt.courseId)?.name||'No course')} • ${escapeHtml(nt.type)} • ${dueLabel(nt.dueDate)}</p><div class="badges"><span class="badge status">${statusText(nt.status)}</span></div>`:'<div class="empty">Nothing urgent yet. Add tasks with due dates.</div>';
+ document.getElementById('affirmation').textContent=affirmations[Math.floor(Math.random()*affirmations.length)];renderHomeTasks()}
+function sortCourses(list){return [...list].sort((a,b)=>(b.pinned===true)-(a.pinned===true)||a.name.localeCompare(b.name))}
+function togglePin(e,id){e.stopPropagation();const c=courseById(id);if(c){c.pinned=!c.pinned;render()}}
+function progressDetails(id){const ts=tasksForCourse(id);const order=['Lecture','Tirgul','Homework','Reading','Practice Exam','Exam','Note','Other'];return order.map(type=>{const items=ts.filter(t=>t.type===type);if(!items.length)return null;return {type,done:items.filter(t=>t.status==='done').length,total:items.length}}).filter(Boolean)}
+function progressDetailsHtml(id){const details=progressDetails(id);return details.length?`<div class="progress-details">${details.map(d=>`<span>${escapeHtml(d.type)}: ${d.done}/${d.total}</span>`).join('')}</div>`:''}
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function updateProgressSnapshots(){if(!state.progressHistory)state.progressHistory={};state.courses.forEach(c=>{const p=progressForCourse(c.id);const arr=state.progressHistory[c.id]||[];const today=todayKey();const existing=arr.find(x=>x.date===today);if(existing)existing.progress=p;else arr.push({date:today,progress:p});state.progressHistory[c.id]=arr.slice(-30)})}
+function weeklyProgressText(id){const arr=(state.progressHistory&&state.progressHistory[id])||[];if(!arr.length)return 'Progress since last week: 0%';const current=progressForCourse(id);const target=new Date();target.setDate(target.getDate()-7);let base=arr[0];for(const x of arr){if(new Date(x.date+'T00:00:00')<=target)base=x}const diff=current-(base?.progress??current);return `Progress since last week: ${diff>=0?'+':''}${diff}%`}
+function nearestTask(){return state.tasks.filter(t=>t.status!=='done'&&t.dueDate).sort((a,b)=>new Date(a.dueDate)-new Date(b.dueDate))[0]}
+function renderHomeTasks(){let tasks=[...state.tasks];const fc=document.getElementById('filterCourse').value,ft=document.getElementById('filterType').value,fs=document.getElementById('filterStatus').value,sort=document.getElementById('sortBy').value;if(fc!=='all')tasks=tasks.filter(t=>t.courseId===fc);if(ft!=='all')tasks=tasks.filter(t=>t.type===ft);if(fs!=='all')tasks=tasks.filter(t=>t.status===fs);tasks.sort((a,b)=>{if(sort==='course')return (courseById(a.courseId)?.name||'').localeCompare(courseById(b.courseId)?.name||'');if(sort==='status')return a.status.localeCompare(b.status);return (a.dueDate||'9999-12-31').localeCompare(b.dueDate||'9999-12-31')});document.getElementById('homeTasks').innerHTML=tasks.length?tasks.map(taskHtml).join(''):'<div class="empty">No items match this view.</div>'}
+function taskHtml(t){const c=courseById(t.courseId);const overdue=t.dueDate&&daysLeft(t.dueDate)<0&&t.status!=='done';return `<div class="task ${t.status==='done'?'done':''}"><input class="check" type="checkbox" ${t.status==='done'?'checked':''} onchange="toggleDone('${t.id}',this.checked)"><div><div class="task-title">${escapeHtml(t.title)}</div><div class="badges"><span class="badge type">${escapeHtml(t.type)}</span><span class="badge status">${statusText(t.status)}</span><span class="badge due ${overdue?'overdue':''}">${dueLabel(t.dueDate)}</span>${c?`<span class="badge" style="background:${c.color}22;color:${c.color}">${escapeHtml(c.name)}</span>`:''}</div>${t.notes?`<p class="muted">${escapeHtml(t.notes).slice(0,120)}${t.notes.length>120?'...':''}</p>`:''}${t.files&&t.files.length?`<div class="file-list">📎 ${t.files.map(f=>escapeHtml(f.name)).join(', ')}</div>`:''}</div><div class="row"><button class="small ghost" onclick="openTaskModal(null,'${t.id}')">Edit</button><button class="small danger" onclick="deleteTask('${t.id}')">Delete</button></div></div>`}
+function openCoursePage(id){currentCourseId=id;document.getElementById('homeView').classList.remove('active');document.getElementById('courseView').classList.add('active');renderCoursePage(id)}
+function showHome(){currentCourseId=null;document.getElementById('courseView').classList.remove('active');document.getElementById('homeView').classList.add('active');render()}
+function renderCoursePage(id){const c=courseById(id);if(!c)return showHome();const p=progressForCourse(id);document.getElementById('coursePageTitle').textContent=c.name;document.getElementById('coursePageMeta').textContent=(c.examDate?dueLabel(c.examDate):'No final date')+' • '+(c.notes||'No course notes')+' • '+weeklyProgressText(id);document.getElementById('coursePageProgressDetails').innerHTML=progressDetailsHtml(id).replace('<div class="progress-details">','').replace('</div>','');const thoughtBox=document.getElementById('courseThoughts');if(thoughtBox&&thoughtBox.value!==c.randomThoughts)thoughtBox.value=c.randomThoughts||'';const cir=document.getElementById('coursePageCircle');cir.style.setProperty('--p',p);cir.style.setProperty('--c',c.color);cir.querySelector('span').textContent=p+'%';let ts=tasksForCourse(id).sort((a,b)=>(a.dueDate||'9999-12-31').localeCompare(b.dueDate||'9999-12-31'));const q=(document.getElementById('courseSearch')?.value||'').toLowerCase().trim();if(q)ts=ts.filter(t=>(t.title+' '+t.type+' '+t.status+' '+(t.notes||'')).toLowerCase().includes(q));document.getElementById('courseTasks').innerHTML=ts.length?ts.map(taskHtml).join(''):'<div class="empty">No items in this course yet.</div>'}
+function openCourseModal(id=null){closeModals();document.getElementById('courseModal').classList.add('show');document.getElementById('courseModalTitle').textContent=id?'Edit course':'Add course';const c=id?courseById(id):null;document.getElementById('courseId').value=c?.id||'';document.getElementById('courseName').value=c?.name||'';document.getElementById('courseExamDate').value=c?.examDate||'';document.getElementById('courseColor').value=c?.color||'#6c63ff';document.getElementById('courseNotes').value=c?.notes||'';document.getElementById('courseLectureCount').value='';document.getElementById('courseTirgulCount').value='';document.getElementById('courseLectureCount').disabled=!!c;document.getElementById('courseTirgulCount').disabled=!!c}
+function saveCourse(){const existingId=document.getElementById('courseId').value;const id=existingId||uid();const name=document.getElementById('courseName').value.trim();if(!name)return alert('Add a course name first.');const oldCourse=courseById(id);const data={id,name,examDate:document.getElementById('courseExamDate').value,color:document.getElementById('courseColor').value,notes:document.getElementById('courseNotes').value.trim(),pinned:oldCourse?.pinned||false,randomThoughts:oldCourse?.randomThoughts||''};const i=state.courses.findIndex(c=>c.id===id);if(i>=0)state.courses[i]=data;else{state.courses.push(data);createCourseTemplateItems(id)}closeModals();render()}
+function createCourseTemplateItems(courseId){const lectures=parseInt(document.getElementById('courseLectureCount').value||'0',10);const tirgulim=parseInt(document.getElementById('courseTirgulCount').value||'0',10);for(let i=1;i<=lectures;i++){state.tasks.push({id:uid(),title:`Lecture ${i}`,courseId,type:'Lecture',status:'not-started',dueDate:'',notes:'',files:[]})}for(let i=1;i<=tirgulim;i++){state.tasks.push({id:uid(),title:`Tirgul ${i}`,courseId,type:'Tirgul',status:'not-started',dueDate:'',notes:'',files:[]})}}
+function openTaskModal(courseId=null,taskId=null){if(!state.courses.length)return alert('Add a course first.');closeModals();document.getElementById('taskModal').classList.add('show');document.getElementById('taskModalTitle').textContent=taskId?'Edit item':'Add item';renderCourseOptions();const t=taskId?state.tasks.find(x=>x.id===taskId):null;editingFiles=t?.files?[...t.files]:[];document.getElementById('taskId').value=t?.id||'';document.getElementById('taskTitle').value=t?.title||'';document.getElementById('taskCourse').value=t?.courseId||courseId||currentCourseId||state.courses[0].id;document.getElementById('taskType').value=t?.type||'Lecture';document.getElementById('taskStatus').value=t?.status||'not-started';document.getElementById('taskDue').value=t?.dueDate||'';document.getElementById('taskNotes').value=t?.notes||'';document.getElementById('taskFiles').value='';renderExistingFiles()}
+function renderExistingFiles(){document.getElementById('existingFiles').innerHTML=editingFiles.length?'Saved files: '+editingFiles.map(f=>`<span>📎 ${escapeHtml(f.name)}</span>`).join(' • '):'No files saved yet.'}
+function saveTask(){const id=document.getElementById('taskId').value||uid();const title=document.getElementById('taskTitle').value.trim();if(!title)return alert('Add a title first.');const input=document.getElementById('taskFiles');const newFiles=[...input.files].map(f=>({name:f.name,size:f.size,type:f.type,addedAt:new Date().toISOString()}));const old=state.tasks.find(t=>t.id===id);const data={id,title,courseId:document.getElementById('taskCourse').value,type:document.getElementById('taskType').value,status:document.getElementById('taskStatus').value,dueDate:document.getElementById('taskDue').value,notes:document.getElementById('taskNotes').value.trim(),files:[...editingFiles,...newFiles]};const i=state.tasks.findIndex(t=>t.id===id);if(i>=0)state.tasks[i]=data;else state.tasks.push(data);closeModals();render();if(data.status==='done'&&old?.status!=='done')showToast(randomCompletionMessage())}
+function setNoDueDate(){document.getElementById('taskDue').value=''}
+function toggleDone(id,checked){const t=state.tasks.find(t=>t.id===id);if(t){t.status=checked?'done':'in-progress';render();if(checked)showToast(randomCompletionMessage())}}
+function deleteTask(id){const t=state.tasks.find(t=>t.id===id);if(confirm(`Delete "${t?.title||'this item'}"?`)){state.tasks=state.tasks.filter(t=>t.id!==id);render()}}
+function deleteCourse(id){const c=courseById(id);if(confirm(`Delete course "${c?.name}" and all its items?`)){state.courses=state.courses.filter(c=>c.id!==id);state.tasks=state.tasks.filter(t=>t.courseId!==id);if(state.progressHistory)delete state.progressHistory[id];showHome()}}
+function saveRandomThoughts(){const c=courseById(currentCourseId);if(c){c.randomThoughts=document.getElementById('courseThoughts').value;save()}}
+function randomCompletionMessage(){const msgs=['✨ Nice work!','🎉 One more step forward.','⭐ Progress is progress.','✅ Item completed.','🌱 Tiny win, real progress.'];return msgs[Math.floor(Math.random()*msgs.length)]}
+function showToast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>t.classList.remove('show'),1800)}
+function closeModals(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('show'))}
+function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='chaos-control-backup.json';a.click();URL.revokeObjectURL(a.href)}
+function escapeHtml(str=''){return String(str).replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[m]))}
+function applyTheme(){const theme=localStorage.getItem('chaos-control-theme')||'light';document.body.classList.toggle('dark',theme==='dark');const sw=document.getElementById('themeSwitch');if(sw)sw.checked=theme==='dark'}
+function toggleTheme(isDark){localStorage.setItem('chaos-control-theme',isDark?'dark':'light');applyTheme()}
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModals()}));
+applyTheme();load();render();
+</script>
+</body>
+</html>
